@@ -1,7 +1,10 @@
-import os
+import gc
+gc.collect()
+print(gc.mem_free())
+from microWebSrv import MicroWebSrv
 import ujson
 import network
-from microWebSrv import MicroWebSrv
+from os import ispath
 
 PARAMETER_FLOAT = 1
 PARAMETER_INT = 2
@@ -126,7 +129,6 @@ class MicroSetup():
             self._load_settings()
         else:
             self._generate_form()
-            self._setup_and_start_server()
 
 
     def _generate_form(self):
@@ -138,7 +140,14 @@ class MicroSetup():
             elif p.param_type == PARAMETER_BOOL:
                 formdata += _bool_input.format(param_name=p.param_name, label=p.display_name) + "\n"
             else:
-                step = "" # TODO: implement
+                step = ""
+                if p.decimals == 0:
+                    step = 1
+                else:
+                    step = "0."
+                    for i in range(p.decimals-1):
+                        step += "0"
+                    step += 1
                 formdata += _number_input.format(param_name=p.param_name, label=p.display_name, min=p.min, max=p.max, step=step) + "\n"
 
         self.form = _form.format(formcontent=formdata)
@@ -172,14 +181,14 @@ class MicroSetup():
             content = content
             )
             return
-        # Return Validation in progress, Accesspoint will restart on failure # TODO implement
+        content = _body.format(device_name=MicroWebSrv.HTMLEscape(self.device_name), content=_validation_in_progress)
         self._stop_server()
         if self.validator(self.cfg):
             self._write_settings()
             self.callback(self.cfg)
         else:
             self.validation_error = True
-            self._setup_and_start_server()
+            self.start_server()
 
 
     def _load_settings(self):
@@ -193,7 +202,7 @@ class MicroSetup():
             ujson.dump(self.cfg, f)
 
 
-    def _setup_and_start_server(self):
+    def start_server(self):
         self.wifi = network.WLAN(network.AP_IF)
         self.wifi.active(True)
         self.wifi.config(essid=self.device_name, password="setup")
