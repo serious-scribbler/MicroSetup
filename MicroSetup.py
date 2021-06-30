@@ -11,6 +11,7 @@ _body_start = """\
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/purecss/base-min.css">
     <link rel="stylesheet" href="/purecss/pure-min.css">
 	<link rel="stylesheet" href="/purecss/grids-responsive-min.css">
@@ -201,6 +202,17 @@ class MicroSetup():
         with open("settings.cfg", "w") as f:
             ujson.dump(self.cfg, f)
 
+
+    def cleanup(self):
+        global MicroWebSrv
+        collect()
+        before = mem_free()
+        if "MicroWebSrv" in dir():
+            from sys import modules
+            del MicroWebSrv
+            del modules["microWebSrv"]
+        collect()
+        return mem_free() - before
 
     def start_server(self):
         if self.done:
