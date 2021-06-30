@@ -120,7 +120,6 @@ class MicroSetup():
                 self.settings[p.param_name] = p
             else:
                 raise AttributeError("Invalid device_settings list, list entry is not an instance of Parameter!")
-
         if "settings.cfg" in listdir(".") and not debug:
             self._load_settings()
         else:
@@ -156,9 +155,6 @@ class MicroSetup():
 
 
     def index(self, httpClient, httpResponse, routeArgs=None):
-        print(mem_free())
-        collect()
-        print(mem_free())
         if self.validation_error:
             content = _error_body.format(msg=MicroWebSrv.HTMLEscape(self.error_message))
             self.validation_error = False
@@ -169,19 +165,15 @@ class MicroSetup():
             content = content
             )
         else:
-            print("ya")
             httpResponse.WriteResponseFile("www/form.htm", contentType="text/html")
-            print("maybe")
         
 
     def _setup_handler(self, httpClient, httpResponse, routeArgs=None):
         formData = httpClient.ReadRequestPostedFormData()
         if not self._internal_validator(formData):
-            print("no")
             self.validation_error = True
             httpResponse.WriteResponseRedirect("/")
             return
-        print("yes")
         content = _validation_in_progress
         httpResponse.WriteResponseOk(headers = None,
             contentType = "text/html",

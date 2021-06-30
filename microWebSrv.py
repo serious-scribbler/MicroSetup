@@ -194,7 +194,7 @@ class MicroWebSrv :
 
     def _serverProcess(self) :
         self._started = True
-        while True :
+        while self._started :
             try :
                 client, cliAddr = self._server.accept()
             except Exception as ex :
@@ -226,6 +226,7 @@ class MicroWebSrv :
     def Stop(self) :
         if self._started :
             self._server.close()
+            self._started = False
 
     # ----------------------------------------------------------------------------
 
