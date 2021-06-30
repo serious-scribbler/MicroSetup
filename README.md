@@ -2,11 +2,16 @@
 
 A wireless setup module for MicroPython
 
+## Screenshots
+![ConfigurationPage](https://github.com/serious-scribbler/MicroSetup/raw/main/screenshots/ConfigurationPage.png)
+
 ## How to use MicroSetup
 
 The best way to learn how to use MicroSetup is to read `example.py`.
 
 ### General use
+
+**DON'T FORGET TO COPY THE `WWW`-DIRECTORY!**
 
 #### Access Point SSID, password and IP address
 
