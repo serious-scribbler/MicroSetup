@@ -8,12 +8,9 @@ PARAMETER_STRING = 3
 PARAMETER_BOOL = 4
 
 _body_start = """\
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/purecss/base-min.css">
     <link rel="stylesheet" href="/purecss/pure-min.css">
 	<link rel="stylesheet" href="/purecss/grids-responsive-min.css">
@@ -35,7 +32,6 @@ _body_start = """\
 _body_end = """\
             </div>
         </div>
-        
         <div class="footer pure-u-1">
             Powered by <a href="https://github.com/serious-scribbler/MicroSetup">MicroSetup</a>
         </div>
@@ -45,15 +41,10 @@ _body_end = """\
 """
 
 _form_start = """\
-<div class="pure-u-1">
-<form action="/setup" method="post" class="pure-form pure-form-stacked">
-<fieldset>
+<div class="pure-u-1"><form action="/setup" method="post" class="pure-form pure-form-stacked"><fieldset>
 """
 _form_end = """\
-<button type="submit" class="pure-button submit">Submit</button>
-</fieldset>
-</form>
-</div>
+<button type="submit" class="pure-button submit">Submit</button></fieldset></form></div>
 """
 
 _error_body = """\
@@ -150,11 +141,14 @@ class MicroSetup():
                             step += "0"
                         step += "1"
                     f.write(_number_input.format(param_name=p.param_name, label=MicroWebSrv.HTMLEscape(p.display_name), min=p.min, max=p.max, step=step) + "\n")
+                p.display_name = None
             f.write(_form_end)
             f.write(_body_end)
+        collect()
 
 
     def index(self, httpClient, httpResponse, routeArgs=None):
+        collect()
         if self.validation_error:
             content = _error_body.format(msg=MicroWebSrv.HTMLEscape(self.error_message))
             self.validation_error = False
@@ -169,9 +163,11 @@ class MicroSetup():
         
 
     def _setup_handler(self, httpClient, httpResponse, routeArgs=None):
+        collect()
         formData = httpClient.ReadRequestPostedFormData()
         if not self._internal_validator(formData):
             self.validation_error = True
+            formData = None
             httpResponse.WriteResponseRedirect("/")
             return
         content = _validation_in_progress
@@ -231,9 +227,15 @@ class MicroSetup():
     def _internal_validator(self, data):
         for key in self.settings:
             if key not in data:
-                self.error_message = "Missing setting: " + self.settings[key].display_name
-                return False
+                if self.settings[key].param_type == PARAMETER_BOOL:
+                    self.cfg[key] = False
+                else:
+                    self.error_message = "Missing setting: " + self.settings[key].display_name
+                    return False
             else:
+                if data[key] == None:
+                    self.error_message = "Fill out all fields!"
+                    return False
                 setting = self.settings[key]
                 if setting.param_type == PARAMETER_STRING:
                     if data[key] != "":
