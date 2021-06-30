@@ -12,8 +12,7 @@ settings.append(MicroSetup.Parameter("floaty", "Float", MicroSetup.PARAMETER_FLO
 def callback(settings):
     print(settings)
 
-ms = MicroSetup.MicroSetup(settings, "Test Device", callback, debug=True)
+ms = MicroSetup.MicroSetup(settings, "Test Device", callback)
 
-print("Starting server")
 ms.start_server()
 print("Done")

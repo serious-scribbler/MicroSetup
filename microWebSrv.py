@@ -666,8 +666,15 @@ class MicroWebSrv :
                                     return False
                                 size -= x
                             return True
-                        except :
-                            self.WriteResponseInternalServerError()
+                        except Exception as ex:
+                            self.WriteResponse( 500,
+    	                        None,
+    	                        "text/html",
+    	                        "UTF-8",
+    	                        self._execErrCtnTmpl % {
+    	                             'module'  : 'FileResponse',
+    	                             'message' : str(ex)
+    	                        } )
                             return False
             except :
                 pass

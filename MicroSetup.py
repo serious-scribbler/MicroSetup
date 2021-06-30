@@ -1,5 +1,6 @@
 from microWebSrv import MicroWebSrv
 from uos import listdir
+from time import sleep
 from gc import collect, mem_free
 
 PARAMETER_FLOAT = 1
@@ -154,6 +155,9 @@ class MicroSetup():
 
 
     def index(self, httpClient, httpResponse, routeArgs=None):
+        print(mem_free())
+        collect()
+        print(mem_free())
         if self.validation_error:
             content = _error_body.format(msg=MicroWebSrv.HTMLEscape(self.error_message))
             self.validation_error = False
@@ -166,6 +170,7 @@ class MicroSetup():
         else:
             print("ya")
             httpResponse.WriteResponseFile("www/form.htm", contentType="text/html")
+            print("maybe")
         
 
     def _setup_handler(self, httpClient, httpResponse, routeArgs=None):
@@ -182,13 +187,14 @@ class MicroSetup():
             contentCharset = "UTF-8",
             content = content
         )
-        
+        sleep(1)
         self._stop_server()
         if self.validator(self.cfg):
             self._write_settings()
             self.callback(self.cfg)
             self.done = True
         else:
+            self.error_message = "Validation failure"
             self.validation_error = True
             self.start_server()
 
@@ -220,6 +226,7 @@ class MicroSetup():
         ]
 
         self.mws = MicroWebSrv(routeHandlers=route_handlers, webPath="/www/")
+        print("Starting MicroSetup server, wifi password: setupnow")
         self.mws.Start(threaded=False)
 
 
