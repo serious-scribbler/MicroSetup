@@ -1,9 +1,10 @@
 # MicroSetup
 
-A wireless setup module for MicroPython
+A web based setup and configuration module for your MicroPython projects on ESP8266. 
 
 ## Screenshots
-![ConfigurationPage](https://github.com/serious-scribbler/MicroSetup/raw/main/screenshots/ConfigurationPage.png)
+<img src="https://github.com/serious-scribbler/MicroSetup/raw/main/screenshots/ConfigurationPage.png" height="500" alt="ConfigurationPage" />
+
 
 ## How to use MicroSetup
 
