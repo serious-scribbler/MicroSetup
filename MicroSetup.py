@@ -1,6 +1,4 @@
 from microWebSrv import MicroWebSrv
-import ujson
-import network
 from uos import listdir
 from gc import collect, mem_free
 
@@ -9,7 +7,7 @@ PARAMETER_INT = 2
 PARAMETER_STRING = 3
 PARAMETER_BOOL = 4
 
-_body = """\
+_body_start = """\
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,18 +20,19 @@ _body = """\
     <link rel="stylesheet" href="/purecss/forms-min.css">
     <link rel="stylesheet" href="/purecss/buttons-min.css">
     <link rel="stylesheet" href="/style.css">
-    <title>{device_name} Setup</title>
+    <title>Device Setup</title>
 </head>
 <body>
     <div class="pure-g">
         <div class="pure-u-1">
             <div class="pure-menu menu">
-                <a href="#" class="pure-menu-heading logo">{device_name} Setup</a>
+                <a href="#" class="pure-menu-heading logo">Device Setup</a>
             </div>
         </div>
         <div class="pure-u-1">
             <div class="pure-g content-wrapper">
-                {content}
+"""
+_body_end = """\
             </div>
         </div>
         
@@ -45,11 +44,12 @@ _body = """\
 </html> 
 """
 
-_form = """\
+_form_start = """\
 <div class="pure-u-1">
 <form action="/setup" method="post" class="pure-form pure-form-stacked">
 <fieldset>
-{formcontent}
+"""
+_form_end = """\
 <button type="submit" class="pure-button submit">Submit</button>
 </fieldset>
 </form>
@@ -57,9 +57,7 @@ _form = """\
 """
 
 _error_body = """\
-<div class="pure-u-1 error">
-{msg}
-</div>
+<h1 style="color: red;">{msg} - <u>Reload this page to correct the setup</u></h1>
 """
 
 _number_input = """\
@@ -78,10 +76,10 @@ _bool_input = """\
 """
 
 _validation_in_progress = """\
-<div class="pure-u-1 info">
+<h1>
 Setup in progress. This devices access point is unavailable during setup.<br>
 This access point will restart if your provided configuration is invalid.
-</div>
+</h1>
 """
 
 
@@ -103,7 +101,6 @@ class MicroSetup():
 
     wifi = None
     device_name = "MicroPython Device"
-    form:str = ""
     settings = {}
     validator = None
     callback = None
@@ -111,11 +108,12 @@ class MicroSetup():
     mws = None
     error_message = "Validation failed!"
     validation_error = False
+    done = False
 
-    def __init__(self, device_settings: list, device_name:str):
+    def __init__(self, device_settings: list, device_name:str, callback, debug=False):
         self.device_name = device_name
         self.validator = self._none_validator
-        self.callback = self._none_callback
+        self.callback = callback
 
         for p in device_settings:
             if isinstance(p, Parameter):
@@ -123,86 +121,96 @@ class MicroSetup():
             else:
                 raise AttributeError("Invalid device_settings list, list entry is not an instance of Parameter!")
 
-        if "settings.cfg" in listdir("."):
+        if "settings.cfg" in listdir(".") and not debug:
             self._load_settings()
         else:
-            self._generate_form()
+            if "form.htm" not in listdir("www") or debug:
+                self._generate_body()
 
 
-    def _generate_form(self):
-        formdata = ""
-        for key in self.settings:
-            p = self.settings[key]
-            if p.param_type == PARAMETER_STRING:
-                formdata += _string_input.format(param_name=p.param_name, label=p.display_name) + "\n"
-            elif p.param_type == PARAMETER_BOOL:
-                formdata += _bool_input.format(param_name=p.param_name, label=p.display_name) + "\n"
-            else:
-                step = ""
-                if p.decimals == 0:
-                    step = 1
+    def _generate_body(self):
+        print("Generating form.htm")
+        with open("www/form.htm", "w") as f:
+            f.write(_body_start)
+            f.write(_form_start)
+            for key in self.settings:
+                p = self.settings[key]
+                if p.param_type == PARAMETER_STRING:
+                    f.write(_string_input.format(param_name=p.param_name, label=MicroWebSrv.HTMLEscape(p.display_name)) + "\n")
+                elif p.param_type == PARAMETER_BOOL:
+                    f.write(_bool_input.format(param_name=p.param_name, label=MicroWebSrv.HTMLEscape(p.display_name)) + "\n")
                 else:
-                    step = "0."
-                    for i in range(p.decimals-1):
-                        step += "0"
-                    step += "1"
-                formdata += _number_input.format(param_name=p.param_name, label=p.display_name, min=p.min, max=p.max, step=step) + "\n"
-
-        self.form = _form.format(formcontent=formdata)
+                    step = ""
+                    if p.decimals == 0:
+                        step = 1
+                    else:
+                        step = "0."
+                        for i in range(p.decimals-1):
+                            step += "0"
+                        step += "1"
+                    f.write(_number_input.format(param_name=p.param_name, label=MicroWebSrv.HTMLEscape(p.display_name), min=p.min, max=p.max, step=step) + "\n")
+            f.write(_form_end)
+            f.write(_body_end)
 
 
     def index(self, httpClient, httpResponse, routeArgs=None):
-        print(mem_free())
-        collect()
-        print(mem_free())
-        content =" Internal Server Error"
         if self.validation_error:
-            error = _error_body.format(msg=MicroWebSrv.HTMLEscape(self.error_message))
-            content = _body.format(device_name=MicroWebSrv.HTMLEscape(self.device_name), content=error+"\n"+self.form)
-        else:
-            content = _body.format(device_name=MicroWebSrv.HTMLEscape(self.device_name), content=self.form)
-        
-        httpResponse.WriteResponseOk(headers = None,
-            contentType = "text/html",
-            contentCharset = "UTF-8",
-            content = content
-        )
-
-
-    def _setup_handler(self, httpClient, httpResponse, routeArgs=None):
-        formData = httpClient.ReadRequestPostedFormData()
-        if not self._internal_validator(formData):
-            error = _error_body.format(msg=MicroWebSrv.HTMLEscape(self.error_message))
-            content = _body.format(device_name=MicroWebSrv.HTMLEscape(self.device_name), content=error+"\n"+self.form)
-
+            content = _error_body.format(msg=MicroWebSrv.HTMLEscape(self.error_message))
+            self.validation_error = False
+            self.cfg = {}
             httpResponse.WriteResponseOk(headers = None,
             contentType = "text/html",
             contentCharset = "UTF-8",
             content = content
             )
+        else:
+            print("ya")
+            httpResponse.WriteResponseFile("www/form.htm", contentType="text/html")
+        
+
+    def _setup_handler(self, httpClient, httpResponse, routeArgs=None):
+        formData = httpClient.ReadRequestPostedFormData()
+        if not self._internal_validator(formData):
+            print("no")
+            self.validation_error = True
+            httpResponse.WriteResponseRedirect("/")
             return
-        content = _body.format(device_name=MicroWebSrv.HTMLEscape(self.device_name), content=_validation_in_progress)
+        print("yes")
+        content = _validation_in_progress
+        httpResponse.WriteResponseOk(headers = None,
+            contentType = "text/html",
+            contentCharset = "UTF-8",
+            content = content
+        )
+        
         self._stop_server()
         if self.validator(self.cfg):
             self._write_settings()
             self.callback(self.cfg)
+            self.done = True
         else:
             self.validation_error = True
             self.start_server()
 
 
     def _load_settings(self):
+        import ujson
         with open("settings.cfg") as f:
-            cfg = ujson.load(f)
-        self.callback(cfg)
+            self.cfg = ujson.load(f)
+        self.callback(self.cfg)
+        self.done = True
 
 
     def _write_settings(self):
+        import ujson
         with open("settings.cfg", "w") as f:
             ujson.dump(self.cfg, f)
 
 
     def start_server(self):
+        if self.done:
+            return
+        import network
         self.wifi = network.WLAN(network.AP_IF)
         self.wifi.active(True)
         self.wifi.config(essid=self.device_name, password="setupnow")
@@ -241,7 +249,7 @@ class MicroSetup():
                         return False
                     else:
                         val = int(data[key])
-                        if self.validate_number(val, setting.min, setting.max):
+                        if self._validate_number(val, setting.min, setting.max):
                             self.cfg[key] = val
                         else:
                             self.error_message = "Setting out of bounds: " + setting.display_name
@@ -254,7 +262,7 @@ class MicroSetup():
                         return False
                     else:
                         val = float(data[key])
-                        if self.validate_number(val, setting.min, setting.max):
+                        if self._validate_number(val, setting.min, setting.max):
                             self.cfg[key] = val
                         else:
                             self.error_message = "Setting out of bounds: " + setting.display_name
