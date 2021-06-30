@@ -73,6 +73,8 @@ Assuming your instance of MicroSetup is called *ms* you can set your validator f
 
 You validator has to accept a dict as an argument (this will contain the configuration for you to validate) and **return** `True` when the validation was successfull or `False` when the validation failed.
 
+The server is shutdown during validation, so you can freely use wifi during your validation, as long as you disable it after your use.
+
 
 
 #### Starting the server
