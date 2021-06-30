@@ -1,4 +1,3 @@
-from microWebSrv import MicroWebSrv
 from uos import listdir
 from time import sleep
 from gc import collect, mem_free
@@ -125,6 +124,8 @@ class MicroSetup():
         if "settings.cfg" in listdir(".") and not debug:
             self._load_settings()
         else:
+            global MicroWebSrv
+            from microWebSrv import MicroWebSrv
             if "form.htm" not in listdir("www") or debug:
                 self._generate_body()
 
@@ -284,6 +285,7 @@ class MicroSetup():
                         self.cfg[key] = bool(data[key])
         return True
 
+
     def _validate_number(self, number, min, max):
         if number < min or number > max:
             return False
@@ -294,8 +296,3 @@ class MicroSetup():
     # This is the default validator for settings
     def _none_validator(self, config):
         return True
-
-
-    # This is called when the settings where successfully loaded
-    def _none_callback(self, settings):
-        pass

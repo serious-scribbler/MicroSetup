@@ -1,5 +1,5 @@
 import MicroSetup
-
+from gc import collect, mem_free
 print("Main")
 
 settings = []
@@ -15,4 +15,8 @@ def callback(settings):
 ms = MicroSetup.MicroSetup(settings, "Test Device", callback)
 
 ms.start_server()
+print(mem_free())
+ms = None
+collect()
+print(mem_free())
 print("Done")
