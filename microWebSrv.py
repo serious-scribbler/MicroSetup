@@ -6,7 +6,7 @@ Copyright © 2018 Jean-Christophe Bos & HC² (www.hc2.fr)
 
 from    json        import loads, dumps
 from    os          import stat
-from    _thread     import start_new_thread
+#from    _thread     import start_new_thread
 import  socket
 import  gc
 import  re
@@ -109,18 +109,6 @@ class MicroWebSrv :
 
     @staticmethod
     def _startThread(func, args=()) :
-        try :
-            start_new_thread(func, args)
-        except :
-            global _mwsrv_thread_id
-            try :
-                _mwsrv_thread_id += 1
-            except :
-                _mwsrv_thread_id = 0
-            try :
-                start_new_thread('MWSRV_THREAD_%s' % _mwsrv_thread_id, func, args)
-            except :
-                return False
         return True
 
     # ----------------------------------------------------------------------------

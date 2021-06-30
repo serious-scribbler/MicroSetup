@@ -1,10 +1,8 @@
-import gc
-gc.collect()
-print(gc.mem_free())
 from microWebSrv import MicroWebSrv
 import ujson
 import network
-from os import ispath
+from uos import listdir
+from gc import collect, mem_free
 
 PARAMETER_FLOAT = 1
 PARAMETER_INT = 2
@@ -125,7 +123,7 @@ class MicroSetup():
             else:
                 raise AttributeError("Invalid device_settings list, list entry is not an instance of Parameter!")
 
-        if os.isfile("settings.cfg"):
+        if "settings.cfg" in listdir("."):
             self._load_settings()
         else:
             self._generate_form()
@@ -147,19 +145,22 @@ class MicroSetup():
                     step = "0."
                     for i in range(p.decimals-1):
                         step += "0"
-                    step += 1
+                    step += "1"
                 formdata += _number_input.format(param_name=p.param_name, label=p.display_name, min=p.min, max=p.max, step=step) + "\n"
 
         self.form = _form.format(formcontent=formdata)
 
-    @MicroWebSrv.route("/")
-    def index(self, httpClient, httpResponse):
+
+    def index(self, httpClient, httpResponse, routeArgs=None):
+        print(mem_free())
+        collect()
+        print(mem_free())
         content =" Internal Server Error"
         if self.validation_error:
             error = _error_body.format(msg=MicroWebSrv.HTMLEscape(self.error_message))
             content = _body.format(device_name=MicroWebSrv.HTMLEscape(self.device_name), content=error+"\n"+self.form)
         else:
-            content = _body,format(device_name=MicroWebSrv.HTMLEscape(self.device_name), content=self.form)
+            content = _body.format(device_name=MicroWebSrv.HTMLEscape(self.device_name), content=self.form)
         
         httpResponse.WriteResponseOk(headers = None,
             contentType = "text/html",
@@ -168,8 +169,7 @@ class MicroSetup():
         )
 
 
-    @MicroWebSrv.route("/setup", "POST")
-    def _setup_handler(self, httpClient, httpResponse):
+    def _setup_handler(self, httpClient, httpResponse, routeArgs=None):
         formData = httpClient.ReadRequestPostedFormData()
         if not self._internal_validator(formData):
             error = _error_body.format(msg=MicroWebSrv.HTMLEscape(self.error_message))
@@ -205,13 +205,18 @@ class MicroSetup():
     def start_server(self):
         self.wifi = network.WLAN(network.AP_IF)
         self.wifi.active(True)
-        self.wifi.config(essid=self.device_name, password="setup")
-        self.mws = MicroWebSrv(webPath="/www/")
-        self.mws.start(threaded=False)
+        self.wifi.config(essid=self.device_name, password="setupnow")
+        route_handlers = [
+            ("/", "GET", self.index),
+            ("/setup", "POST", self._setup_handler)
+        ]
+
+        self.mws = MicroWebSrv(routeHandlers=route_handlers, webPath="/www/")
+        self.mws.Start(threaded=False)
 
 
     def _stop_server(self):
-        self.mws.stop()
+        self.mws.Stop()
         self.wifi.active(False)
 
 
