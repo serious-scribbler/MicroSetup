@@ -8,7 +8,7 @@ The best way to learn how to use MicroSetup is to read `example.py`.
 
 ### General use
 
-#### Access Point, password and IP address
+#### Access Point SSID, password and IP address
 
 The access point is named as defined in `device_name` during the initialization of the MicroSetup object.
 **Password**: `setupnow`
@@ -41,6 +41,46 @@ Parameter accepts the following arguments:
 
 - **max**: The highest
 
+Put all your configuration parametes into a list. This list is later passed to MicroSetup.
+
+
+
+#### Using the MicroSetup object
+
+Import MicroSetup locally if possible.
+
+Create an instance of MicroSetup using the follwoing parameters:
+
+- **device_settings**: A list of parameters, as described in the previous section
+
+- **device_name**: This name is used as the *SSID* of the device
+
+- **callback**: A function that accepts 1 parameter (a dict with all your settings).
+  
+  This function is called after the settings where loaded.
+
+- **debug**: Set debug to `True` to regenerate the HTML files and ignore and overwrite the stored settings. This can be used during development or to *reset* the devices configuration.
+
+Your settings.cfg file will be loaded automatically if it is present duriong initialization.
+
+
+
+##### Adding a custom validator for your configuration
+
+You can validate the configuration before it is stored by setting a validator.
+
+Assuming your instance of MicroSetup is called *ms* you can set your validator function using `ms.validator = function_name` before you start the server.
+
+You validator has to accept a dict as an argument (this will contain the configuration for you to validate) and **return** `True` when the validation was successfull or `False` when the validation failed.
+
+
+
+#### Starting the server
+
+Assuming your MicroSetup object is called `ms` call `ms.start_server()`, this call is blocking.
+
+**I strongly advice to follow the section about memory efficiency or you will run yourself out of memory very easily!**
+
 
 
 ### Best practices for memory efficiency
@@ -59,11 +99,7 @@ del modules["MicroSetup"]
 gc.collect() # Use example.py to learn where to put this
 ```
 
-
-
 MicroSetup only requires a lot of memory (about 25-30KB) when it generates a new config file. **Reading an existing configuration only uses 4-6KB of RAM.**
-
-
 
 ## How to install MicroSetup on the ESP8266
 
