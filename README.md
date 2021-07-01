@@ -3,8 +3,8 @@
 A web based setup and configuration module for your MicroPython projects on ESP8266. 
 
 ## Screenshots
-<img src="https://github.com/serious-scribbler/MicroSetup/raw/main/screenshots/ConfigurationPage.png" height="500" alt="ConfigurationPage" />
 
+<img src="https://github.com/serious-scribbler/MicroSetup/raw/main/screenshots/ConfigurationPage.png" height="500" alt="ConfigurationPage" />
 
 ## How to use MicroSetup
 
@@ -45,11 +45,9 @@ Parameter accepts the following arguments:
 
 - **min**: The lowest allowed value for int and float types
 
-- **max**: The highest
+- **max**: The highest allowed value for int and float types
 
 Put all your configuration parametes into a list. This list is later passed to MicroSetup.
-
-
 
 #### Using the MicroSetup object
 
@@ -69,8 +67,6 @@ Create an instance of MicroSetup using the follwoing parameters:
 
 Your settings.cfg file will be loaded automatically if it is present duriong initialization.
 
-
-
 ##### Adding a custom validator for your configuration
 
 You can validate the configuration before it is stored by setting a validator.
@@ -81,15 +77,11 @@ You validator has to accept a dict as an argument (this will contain the configu
 
 The server is shutdown during validation, so you can freely use wifi during your validation, as long as you disable it after your use.
 
-
-
 #### Starting the server
 
 Assuming your MicroSetup object is called `ms` call `ms.start_server()`, this call is blocking.
 
 **I strongly advice to follow the section about memory efficiency or you will run yourself out of memory very easily!**
-
-
 
 ### Best practices for memory efficiency
 
@@ -107,7 +99,7 @@ del modules["MicroSetup"]
 gc.collect() # Use example.py to learn where to put this
 ```
 
-MicroSetup only requires a lot of memory (about 25-30KB) when it generates a new config file. **Reading an existing configuration only uses 4-6KB of RAM.**
+MicroSetup only requires a lot of memory (about 25-30KB) when it generates a new config file. **Reading an existing configuration only uses around 8KB of RAM.**
 
 ## How to install MicroSetup on the ESP8266
 
@@ -127,7 +119,7 @@ MicroSetup only requires a lot of memory (about 25-30KB) when it generates a new
 
 3. Compile the included version of MicroWebSrv and MicroSetup:
    
-   *Note that MicroSetup uses a modified version of MicroWebSrv, the original version is incompatible to MicroSetup on ESP8266*
+   *Note that MicroSetup uses a heavily modified version of MicroWebSrv, the original version is incompatible to MicroSetup on ESP8266*
    
    ```shell
    python -m mpy_cross -march=xtensa MicroSetup.py
@@ -165,6 +157,6 @@ MicroSetup should be compatible to ESP32, I will test this as soon as possible. 
 
 ## Credits
 
-MicroSetup is built on a customized version of [MicroWebSrv](https://github.com/jczic/MicroWebSrv) by [jczic (Jean-Christophe Bos)](https://github.com/jczic) licensed under the MIT License (included as MicroWebSrv LICENSE.md)
+MicroSetup is built on a heavily customized version of [MicroWebSrv](https://github.com/jczic/MicroWebSrv) by [jczic (Jean-Christophe Bos)](https://github.com/jczic) licensed under the MIT License (included as MicroWebSrv LICENSE.md)
 
-I removed `_threading` from MicroWebSrv, modified `_serverProcess()` and `Stop()` and added better Exception handling to `WriteResponseFile`for debugging purposes.
+I removed `_threading`, lots of unused getters, everything in connection to pyhtml-templates and some more unused functions from MicroWebSrv to safe memory, modified `_serverProcess()` and `Stop()` and added better Exception handling to `WriteResponseFile`for debugging purposes.

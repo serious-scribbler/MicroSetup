@@ -2,12 +2,9 @@ body {
     background-color: black;
     color: white;
 }
-
 .menu {
     background-color: #121212;
 }
-
-
 .content-wrapper {
     margin-top: 2em;
     padding-left: 2em;
@@ -16,44 +13,28 @@ body {
     margin-right: auto;
     max-width: 768px;
 }
-
 .plot {
     padding: 2em;
 }
-
 .logo {
     color: #23A2A1;
     text-align: center;
     text-transform: none;
     font-weight: bold;
 }
-
 .footer {
     margin-top: 6em;
     text-align: center;
 }
-
 .submit {
     background-color: #23A2A1;
     color: white;
     font-weight: bold;
 }
-
-.error {
-    font-weight: bold;
-    color: red;
-    text-align: center;
-    font-size: 16pt;
-    margin-bottom: 2em;
-    border-radius: 0.5em;
-    border: 4px solid red;
-}
-
 .centered {
     display: block;
     float: center;
 }
-
 .info {
     font-size: 16pt;
     text-align: center;

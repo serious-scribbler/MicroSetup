@@ -16,7 +16,7 @@ def setup():
         MicroSetup.Parameter("led", "Enable LED", MicroSetup.PARAMETER_BOOL),
         MicroSetup.Parameter("floaty", "Float value", MicroSetup.PARAMETER_FLOAT, decimals=2)
     ]
-    ms = MicroSetup.MicroSetup(settings, "Test Device", callback) # debug=True regnerates the html and config every time
+    ms = MicroSetup.MicroSetup(settings, "Test Device", callback, debug=True) # debug=True regnerates the html and config every time
     ms.start_server()
     ms.cleanup() # Clean up starts here
     del MicroSetup
