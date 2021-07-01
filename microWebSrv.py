@@ -37,10 +37,8 @@ class MicroWebSrv :
     # ============================================================================
 
     _indexPages = [
-        "index.pyhtml",
         "index.html",
         "index.htm",
-        "default.pyhtml",
         "default.html",
         "default.htm"
     ]
@@ -56,12 +54,6 @@ class MicroWebSrv :
         ".xhtml" : "application/xhtml+xml",
         ".json"  : "application/json",
         ".zip"   : "application/zip",
-        ".pdf"   : "application/pdf",
-        ".ts"    : "application/typescript",
-        ".woff"  : "font/woff",
-        ".woff2" : "font/woff2",
-        ".ttf"   : "font/ttf",
-        ".otf"   : "font/otf",
         ".jpg"   : "image/jpeg",
         ".jpeg"  : "image/jpeg",
         ".png"   : "image/png",
@@ -77,8 +69,6 @@ class MicroWebSrv :
         ">" : "&gt;",
         "<" : "&lt;"
     }
-
-    _pyhtmlPagesExt = '.pyhtml'
 
     # ============================================================================
     # ===( Class globals  )=======================================================
@@ -143,11 +133,6 @@ class MicroWebSrv :
         except :
             return False
 
-    # ----------------------------------------------------------------------------
-
-    @staticmethod
-    def _isPyHTMLFile(filename) :
-        return filename.lower().endswith(MicroWebSrv._pyhtmlPagesExt)
 
     # ============================================================================
     # ===( Constructor )==========================================================
@@ -339,23 +324,20 @@ class MicroWebSrv :
                             elif self._method.upper() == "GET" :
                                 filepath = self._microWebSrv._physPathFromURLPath(self._resPath)
                                 if filepath :
-                                    if MicroWebSrv._isPyHTMLFile(filepath) :
-                                        response.WriteResponsePyHTMLFile(filepath)
-                                    else :
-                                        contentType = self._microWebSrv.GetMimeTypeFromFilename(filepath)
-                                        if contentType :
-                                            if self._microWebSrv.LetCacheStaticContentLevel > 0 :
-                                                if self._microWebSrv.LetCacheStaticContentLevel > 1 and \
-                                                   'if-modified-since' in self._headers :
-                                                    response.WriteResponseNotModified()
-                                                else:
-                                                    headers = { 'Last-Modified' : 'Fri, 1 Jan 2018 23:42:00 GMT', \
-                                                                'Cache-Control' : 'max-age=315360000' }
-                                                    response.WriteResponseFile(filepath, contentType, headers)
-                                            else :
-                                                response.WriteResponseFile(filepath, contentType)
+                                    contentType = self._microWebSrv.GetMimeTypeFromFilename(filepath)
+                                    if contentType :
+                                        if self._microWebSrv.LetCacheStaticContentLevel > 0 :
+                                            if self._microWebSrv.LetCacheStaticContentLevel > 1 and \
+                                               'if-modified-since' in self._headers :
+                                                response.WriteResponseNotModified()
+                                            else:
+                                                headers = { 'Last-Modified' : 'Fri, 1 Jan 2018 23:42:00 GMT', \
+                                                            'Cache-Control' : 'max-age=315360000' }
+                                                response.WriteResponseFile(filepath, contentType, headers)
                                         else :
-                                            response.WriteResponseForbidden()
+                                            response.WriteResponseFile(filepath, contentType)
+                                    else :
+                                        response.WriteResponseForbidden()
                                 else :
                                     response.WriteResponseNotFound()
                             else :
@@ -431,66 +413,6 @@ class MicroWebSrv :
 
         # ------------------------------------------------------------------------
 
-        def GetServer(self) :
-            return self._microWebSrv
-
-        # ------------------------------------------------------------------------
-
-        def GetAddr(self) :
-            return self._addr
-
-        # ------------------------------------------------------------------------
-
-        def GetIPAddr(self) :
-            return self._addr[0]
-
-        # ------------------------------------------------------------------------
-
-        def GetPort(self) :
-            return self._addr[1]
-
-        # ------------------------------------------------------------------------
-
-        def GetRequestMethod(self) :
-            return self._method
-
-        # ------------------------------------------------------------------------
-
-        def GetRequestTotalPath(self) :
-            return self._path
-
-        # ------------------------------------------------------------------------
-
-        def GetRequestPath(self) :
-            return self._resPath
-
-        # ------------------------------------------------------------------------
-
-        def GetRequestQueryString(self) :
-            return self._queryString
-
-        # ------------------------------------------------------------------------
-
-        def GetRequestQueryParams(self) :
-            return self._queryParams
-
-        # ------------------------------------------------------------------------
-
-        def GetRequestHeaders(self) :
-            return self._headers
-
-        # ------------------------------------------------------------------------
-
-        def GetRequestContentType(self) :
-            return self._contentType
-
-        # ------------------------------------------------------------------------
-
-        def GetRequestContentLength(self) :
-            return self._contentLength
-
-        # ------------------------------------------------------------------------
-
         def ReadRequestContent(self, size=None) :
             if size is None :
                 size = self._contentLength
@@ -514,17 +436,6 @@ class MicroWebSrv :
                         value = MicroWebSrv._unquote_plus(param[1]) if len(param) > 1 else ''
                         res[MicroWebSrv._unquote_plus(param[0])] = value
             return res
-
-        # ------------------------------------------------------------------------
-
-        def ReadRequestContentAsJSON(self) :
-            data = self.ReadRequestContent()
-            if data :
-                try :
-                    return loads(data.decode())
-                except :
-                    pass
-            return None
         
     # ============================================================================
     # ===( Class Response  )======================================================
@@ -599,20 +510,6 @@ class MicroWebSrv :
 
         # ------------------------------------------------------------------------
 
-        def WriteSwitchProto(self, upgrade, headers=None) :
-            self._writeFirstLine(101)
-            self._writeHeader("Connection", "Upgrade")
-            self._writeHeader("Upgrade",    upgrade)
-            if isinstance(headers, dict) :
-                for header in headers :
-                    self._writeHeader(header, headers[header])
-            self._writeServerHeader()
-            self._writeEndHeader()
-            if self._client._socketfile is not self._client._socket :
-                self._client._socketfile.flush()   # CPython needs flush to continue protocol
-
-        # ------------------------------------------------------------------------
-
         def WriteResponse(self, code, headers, contentType, contentCharset, content) :
             try :
                 if content :
@@ -628,26 +525,6 @@ class MicroWebSrv :
             except :
                 return False
 
-        # ------------------------------------------------------------------------
-
-        def WriteResponsePyHTMLFile(self, filepath, headers=None, vars=None) :
-            if 'MicroWebTemplate' in globals() :
-                with open(filepath, 'r') as file :
-                    code = file.read()
-                mWebTmpl = MicroWebTemplate(code, escapeStrFunc=MicroWebSrv.HTMLEscape, filepath=filepath)
-                try :
-                    tmplResult = mWebTmpl.Execute(None, vars)
-                    return self.WriteResponse(200, headers, "text/html", "UTF-8", tmplResult)
-                except Exception as ex :
-                    return self.WriteResponse( 500,
-    	                                       None,
-    	                                       "text/html",
-    	                                       "UTF-8",
-    	                                       self._execErrCtnTmpl % {
-    	                                            'module'  : 'PyHTML',
-    	                                            'message' : str(ex)
-    	                                       } )
-            return self.WriteResponseNotImplemented()
 
         # ------------------------------------------------------------------------
 
@@ -684,14 +561,6 @@ class MicroWebSrv :
 
         # ------------------------------------------------------------------------
 
-        def WriteResponseFileAttachment(self, filepath, attachmentName, headers=None) :
-            if not isinstance(headers, dict) :
-                headers = { }
-            headers["Content-Disposition"] = "attachment; filename=\"%s\"" % attachmentName
-            return self.WriteResponseFile(filepath, None, headers)
-
-        # ------------------------------------------------------------------------
-
         def WriteResponseOk(self, headers=None, contentType=None, contentCharset=None, content=None) :
             return self.WriteResponse(200, headers, contentType, contentCharset, content)
 
@@ -719,15 +588,6 @@ class MicroWebSrv :
                                             'reason'  : responseCode[0],
                                             'message' : responseCode[1]
                                        } )
-
-        # ------------------------------------------------------------------------
-
-        def WriteResponseJSONError(self, code, obj=None) :
-            return self.WriteResponse( code,
-                                       None,
-                                       "application/json",
-                                       "UTF-8",
-                                       dumps(obj if obj else { }) )
 
         # ------------------------------------------------------------------------
 
@@ -766,13 +626,6 @@ class MicroWebSrv :
 
         def WriteResponseNotImplemented(self) :
             return self.WriteResponseError(501)
-
-        # ------------------------------------------------------------------------
-
-        def FlashMessage(self, messageText, messageStyle='') :
-            if 'MicroWebTemplate' in globals() :
-                MicroWebTemplate.MESSAGE_TEXT = messageText
-                MicroWebTemplate.MESSAGE_STYLE = messageStyle
 
         # ------------------------------------------------------------------------
 

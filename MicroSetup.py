@@ -10,34 +10,25 @@ PARAMETER_BOOL = 4
 _body_start = """\
 <html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/purecss/base-min.css">
-    <link rel="stylesheet" href="/purecss/pure-min.css">
-	<link rel="stylesheet" href="/purecss/grids-responsive-min.css">
-    <link rel="stylesheet" href="/purecss/forms-min.css">
-    <link rel="stylesheet" href="/purecss/buttons-min.css">
-    <link rel="stylesheet" href="/style.css">
-    <title>Device Setup</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/purecss/base-min.css">
+<link rel="stylesheet" href="/purecss/pure-min.css">
+<link rel="stylesheet" href="/purecss/grids-responsive-min.css">
+<link rel="stylesheet" href="/purecss/forms-min.css">
+<link rel="stylesheet" href="/purecss/buttons-min.css">
+<link rel="stylesheet" href="/style.css">
+<title>Device Setup</title>
 </head>
 <body>
-    <div class="pure-g">
-        <div class="pure-u-1">
-            <div class="pure-menu menu">
-                <a href="#" class="pure-menu-heading logo">Device Setup</a>
-            </div>
-        </div>
-        <div class="pure-u-1">
-            <div class="pure-g content-wrapper">
+<div class="pure-g"><div class="pure-u-1"><div class="pure-menu menu">
+<a href="#" class="pure-menu-heading logo">Device Setup</a></div></div>
+<div class="pure-u-1"><div class="pure-g content-wrapper">
 """
 _body_end = """\
-            </div>
-        </div>
-        <div class="footer pure-u-1">
-            Powered by <a href="https://github.com/serious-scribbler/MicroSetup">MicroSetup</a>
-        </div>
-    </div>
-</body>
+</div></div><div class="footer pure-u-1">
+Powered by <a href="https://github.com/serious-scribbler/MicroSetup">MicroSetup</a>
+</div></div></body>
 </html> 
 """
 
@@ -79,7 +70,7 @@ class Parameter():
     param_type: int
     param_name: str
     decimals: int
-    display_name: str = "Parameter"
+    display_name: str
 
     def __init__(self, param_name: str, display_name: str, param_type:int=PARAMETER_STRING, decimals:int=0, min=0, max=100):
         self.param_name = param_name
@@ -92,13 +83,13 @@ class Parameter():
 class MicroSetup():
 
     wifi = None
-    device_name = "MicroPython Device"
+    device_name: str
     settings = {}
     validator = None
     callback = None
     cfg = {}
     mws = None
-    error_message = "Validation failed!"
+    error_message = "Validation failed"
     validation_error = False
     done = False
 
@@ -111,8 +102,8 @@ class MicroSetup():
             if isinstance(p, Parameter):
                 self.settings[p.param_name] = p
             else:
-                raise AttributeError("Invalid device_settings list, list entry is not an instance of Parameter!")
-        if "settings.cfg" in listdir(".") and not debug:
+                raise AttributeError("A list entry is not an instance of Parameter")
+        if "settings" in listdir(".") and not debug:
             self._load_settings()
         else:
             global MicroWebSrv
@@ -184,14 +175,14 @@ class MicroSetup():
             self.callback(self.cfg)
             self.done = True
         else:
-            self.error_message = "Validation failure"
+            self.error_message = "Validation failed"
             self.validation_error = True
             self.start_server()
 
 
     def _load_settings(self):
         import ujson
-        with open("settings.cfg") as f:
+        with open("settings") as f:
             self.cfg = ujson.load(f)
         self.callback(self.cfg)
         self.done = True
@@ -199,7 +190,7 @@ class MicroSetup():
 
     def _write_settings(self):
         import ujson
-        with open("settings.cfg", "w") as f:
+        with open("settings", "w") as f:
             ujson.dump(self.cfg, f)
 
 
@@ -227,7 +218,7 @@ class MicroSetup():
         ]
 
         self.mws = MicroWebSrv(routeHandlers=route_handlers, webPath="/www/")
-        print("Starting MicroSetup server, wifi password: setupnow")
+        print("Starting the server, wifi pw: setupnow")
         self.mws.Start(threaded=False)
 
 
