@@ -51,7 +51,7 @@ Put all your configuration parametes into a list. This list is later passed to M
 
 #### Using the MicroSetup object
 
-Import MicroSetup locally if possible.
+Only import MicroSetup where needed to avoid unnessecary memory use.
 
 Create an instance of MicroSetup using the follwoing parameters:
 
@@ -85,7 +85,7 @@ Assuming your MicroSetup object is called `ms` call `ms.start_server()`, this ca
 
 ### Best practices for memory efficiency
 
-Only import MicroSetup locally if possible and run `gc.collect()` when it isn't in use anymore. Take a look at `example.py` for an efficient example.
+Only import MicroSetup when it's needed and run `gc.collect()` when it isn't in use anymore. Take a look at `example.py` for an efficient example.
 
  Call the following after MicroSetup.start_server():
 
@@ -95,7 +95,6 @@ ms.cleanup()
 del MicroSetup
 from sys import modules
 del modules["MicroSetup"]
-# Call the following in a different scope where the import of MicroSetup isn't used
 gc.collect() # Use example.py to learn where to put this
 ```
 
